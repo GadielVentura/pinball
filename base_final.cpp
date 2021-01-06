@@ -39,6 +39,8 @@ Skybox: Se agrega Skybox como textura ligada a la cámara.
 #include "Sphere.h"
 #include "cilindro.h"
 #include "Cono.h"
+#include "Camera2.h"
+//#include"SpotLight2.h"
 
 const float toRadians = 3.14159265f / 180.0f;
 float movCoche;
@@ -51,6 +53,8 @@ Window mainWindow;
 std::vector<Mesh*> meshList;
 std::vector<Shader> shaderList;
 Camera camera;
+Camera2 camera2; 
+
 
 Texture brickTexture;
 Texture dirtTexture;
@@ -571,6 +575,7 @@ int main()
 	CreateShaders();
 
 	camera = Camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), -60.0f, 0.0f, 5.0f, 0.5f);
+	camera2 = Camera2(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(mainWindow.getd(), -1.9f, mainWindow.getw()), -20.0f, 0.0f, 5.0f, 0.5f);
 
 	brickTexture = Texture("Textures/brick.png");
 	brickTexture.LoadTextureA();
@@ -671,7 +676,7 @@ int main()
 	//Declaración de primer luz puntual
 	pointLights[0] = PointLight(1.0f, 0.0f, 0.0f,
 								0.0f, 1.0f,
-								2.0f, 1.5f,1.5f,
+								-3.3f, -1.945f,1.3f,
 								0.3f, 0.2f, 0.1f);
 	pointLightCount++;
 	
@@ -682,17 +687,20 @@ int main()
 		0.0f, 0.0f, 0.0f,
 		0.0f, -1.0f, 0.0f,
 		1.0f, 0.0f, 0.0f,
-		20.0f);
+		30.0f);
 	spotLightCount++;
+
+	
 
 	//luz fija
 	spotLights[1] = SpotLight(0.50196f, 0.0f, 0.50196f, //color
 		0.0f, 2.0f,          //difusion
-		0.0f, -1.945f, 3.6f,   //posicion
+		0.0f, 0.0f, 3.6f,   //posicion
 		0.0f, -1.0f, 0.0f,  //factor de atenuacion
 		1.0f, 0.0f, 0.0f,
-		30.0f);
+		20.0f);
 	spotLightCount++;
+
 	//luz de faro
 	 //luz de helicóptero
 
@@ -728,13 +736,21 @@ int main()
 		uniformSpecularIntensity = 0, uniformShininess = 0;
 	glm::mat4 projection = glm::perspective(45.0f, (GLfloat)mainWindow.getBufferWidth() / mainWindow.getBufferHeight(), 0.1f, 300.0f);
 	
+	//glm::mat4 projection2 = glm::perspective(45.0f, (GLfloat)mainWindow.getBufferWidth() / mainWindow.getBufferHeight(), 0.1f, 200.0f);
+
 	movCoche = 0.0f;
 	//movOffset = 0.5f;
 	movOffset = 10.0f;
-	movMuslo = 0.0f;
-	movPie = 0.0f;
-	dedos = 0.0f;
-
+	movMuslo = -270.0f;
+	movPie = -270.0f;
+	dedos = -270.0f;
+	float mol=0.0f;
+	float bandera = 0.0;
+	float bandera1 = 0.0,bandera2=0.0;
+	float caz=3.6f;
+	float cax = 3.7f;
+	float cambiodir = 0.0, cambiodir1 = 0.0, cambiodir2 = 0.0, cambiodir3 = 0.0, cambiodir4=0.0;
+	
 
 	sp.init(); //inicializar esfera
 	sp.load();//enviar la esfera al shader
@@ -753,30 +769,182 @@ int main()
 			}*/
 
 	
-			if (movMuslo <=1440.0f)
+			if (movMuslo < 30.0f && bandera == 0.0f)
 			{
 				movMuslo += movOffset * deltaTime;
+				if (movMuslo >= 15)
+				{
+					bandera = 1.0f;
+				}
+			}
+			else if (bandera == 1.0f)
+			{
+				movMuslo -= movOffset * deltaTime;
+				if (movMuslo <= 0.0f)
+				{
+					bandera = 0.0f;
+				}
 			}
 		
-			if (movPie <= 360.0f)
+			if (movPie < 20.0f && bandera1==0.0f)
 			{
 				movPie += movOffset * deltaTime;
+				if (movPie >= 15)
+				{
+					bandera1 = 1.0f;
+				}
+			}
+			else if (bandera1 == 1.0f)
+			{
+				movPie -= movOffset * deltaTime;
+				if (movPie <= 0.0f)
+				{
+					bandera1 = 0.0f;
+				}
 			}
 		
-			if (dedos <= 360.0f)
+			if (dedos < 20.0f && bandera2==0.0)
 			{
 				dedos += movOffset * deltaTime;
+				if (movPie >= 15)
+				{
+					bandera2 = 1.0f;
+				}
 			}
+			else if (bandera2 == 1.0f)
+			{
+				dedos -= movOffset * deltaTime;
+				if (dedos <= 0.0f)
+				{
+					bandera2 = 0.0f;
+				}
+			}
+
+			//animacion molino
+			if(mol<=500.0f)
+			{
+				mol += movOffset * deltaTime;
+				if (mol > 500.0f)
+				{
+					mol = 0.0f;
+				}
+			}
+
+			
+			//animacion canica
+			
+			if ((caz >= mainWindow.getavCaz()) && cambiodir==0.0) //avanza vertical
+			{
+				caz -= 0.2f;
+
+				if(caz < -3.6)
+				{
+					cambiodir = 1.0;
+				}
+				
+			}
+			else if (cambiodir == 1.0)
+			{
+				if (cax >= mainWindow.getavCax() && cambiodir1==0.0)//avanza horizontal hasta llegar a la silla
+				{
+					cax -= 0.1f;
+					if (cax < -2.6)
+					{
+						cambiodir1 = 1.0;
+					}
+				}
+					else if (cambiodir1 = 1.0)
+					{
+						if (cax <= -1.2)
+						{
+							cax += 0.1;
+						}
+						if (caz <= -0.2)
+						{
+							caz += 0.1;
+						}
+						else if (cambiodir2 = 1.0)
+						{
+							if (cax <= 0.3 && cambiodir3==0.0)
+							{
+								cax += 0.1;
+								if (cax > 0.3)
+								{
+									cambiodir3 = 1.0;
+								}
+							}
+							if (caz <= 2.0)
+							{
+								caz += 0.1;
+							}
+							else if (cambiodir3 == 1.0)
+							{
+								if ((cax >= -2.0) && cambiodir4==0.0)
+								{
+									cax -= 0.1;
+									if (cax < -2.0)
+									{
+										cambiodir4 = 1.0;
+									}
+								}
+								if (caz <= 2.5)
+								{
+									caz += 0.1;
+								}
+								else if (cambiodir4 = 1.0)
+								{
+									if (cax <= 0.0)
+									{
+										cax += 0.1;
+									}
+									if (caz <= 4.0)
+									{
+										caz += 0.1;
+									}
+								}
+							}
+						}
+					}
+				//else if (cambiodir == 1.0)
+				//{
+				//	if ((caz <= -2.8))//baja para chocar con la silla
+				//	{
+				//		caz += 0.1f;
+
+
+				//	}
+
+				//}
+			
+				
+			}
+			if ((mainWindow.getresorte()==0.05f))
+			{
+				caz = 3.0;
+				cax = 3.7;
+				cambiodir = 0.0; 
+				cambiodir1 = 0.0;
+				cambiodir2 = 0.0;
+				cambiodir3 = 0.0;
+				cambiodir4 = 0.0;
+			}
+			
+			
+			
+			
 
 		//Recibir eventos del usuario
 		glfwPollEvents();
 
 		camera.keyControl(mainWindow.getsKeys(), deltaTime);
 		camera.mouseControl(mainWindow.getXChange(), mainWindow.getYChange());
+		/*camera2.keyControl(mainWindow.getsKeys(), deltaTime);
+		camera2.mouseControl(mainWindow.getXChange(), mainWindow.getYChange());*/
 		// Clear the window
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		skybox.DrawSkybox(camera.calculateViewMatrix(), projection);
+		//skybox.DrawSkybox(camera2.calculateViewMatrix(), projection2);
 		shaderList[0].UseShader();
 		uniformModel = shaderList[0].GetModelLocation();
 		uniformProjection = shaderList[0].GetProjectionLocation();
@@ -789,12 +957,49 @@ int main()
 		lowerLight.y -= 0.3f;
 		spotLights[0].SetFlash(lowerLight, camera.getCameraDirection());
 
+		/*glm::vec3 lowerLight1 = camera2.getCamera2Position();
+		lowerLight1.y -= 0.3f;
+		spotLights[0].SetFlash(lowerLight1, camera2.getCameraDirection());*/
+
 		shaderList[0].SetDirectionalLight(&mainLight);
-		shaderList[0].SetPointLights(pointLights, pointLightCount);
-		shaderList[0].SetSpotLights(spotLights, spotLightCount);
+		//shaderList[0].SetPointLights(pointLights, pointLightCount);
+		//shaderList[0].SetSpotLights(spotLights, spotLightCount);
+
+		if (mainWindow.getluz() == 1.0f)
+		{
+			shaderList[0].SetSpotLights(spotLights, spotLightCount);
+		}
+		else
+		{
+			shaderList[0].SetSpotLights(spotLights, spotLightCount - 1);
+		}
+
+		if (mainWindow.getluz1() == 1.0f)
+		{
+			shaderList[0].SetPointLights(pointLights, pointLightCount);
+		}
+		else
+		{
+			shaderList[0].SetPointLights(pointLights, pointLightCount-1);
+		}
+
+		if (mainWindow.getluz2() == 0.0f)
+		{
+			shaderList[0].SetSpotLights(spotLights, spotLightCount-1);
+			
+		}
+		else
+		{
+			shaderList[0].SetSpotLights(spotLights, spotLightCount);
+		}
+
 		glUniformMatrix4fv(uniformProjection, 1, GL_FALSE, glm::value_ptr(projection));
 		glUniformMatrix4fv(uniformView, 1, GL_FALSE, glm::value_ptr(camera.calculateViewMatrix()));
 		glUniform3f(uniformEyePosition, camera.getCameraPosition().x, camera.getCameraPosition().y, camera.getCameraPosition().z);
+
+		//glUniform3f(uniformEyePosition, camera2.getCamera2Position().x, camera2.getCamera2Position().y, camera2.getCamera2Position().z);
+
+
 
 		glm::mat4 model(1.0);
 
@@ -813,7 +1018,7 @@ int main()
 		model = glm::mat4(1.0);
 		glm::mat4 modelaux(1.0);//matriz para almacenar datos
 		modelaux = model = glm::translate(model, glm::vec3(1.0f, 0.0f, 0.0f));
-		modelaux = model = glm::rotate(model, glm::radians(movCoche * toRadians), glm::vec3(0.0f, 1.0f, 0.0f));
+		modelaux = model = glm::rotate(model, movCoche * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
 		model = glm::translate(model, glm::vec3(-4.0f, -1.75f, 1.0f));
 		model = glm::scale(model, glm::vec3(1.0f, 0.5f, 0.5f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));//FALSE ES PARA QUE NO SEA TRANSPUESTA
@@ -825,7 +1030,7 @@ int main()
 		model = modelaux;
 		//model = glm::translate(model, glm::vec3(0.5f, 0.0f, 0.0f));
 		model = glm::translate(model, glm::vec3(-3.5f, -1.75f, 1.0f));
-		model = glm::rotate(model, glm::radians(-movMuslo * toRadians), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, -movMuslo * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
 		//chamorro
 		modelaux = model = glm::translate(model, glm::vec3(0.5f, 0.0f, 0.0f));
 		model = glm::scale(model, glm::vec3(1.0f, 0.5f, 0.5f));
@@ -836,7 +1041,7 @@ int main()
 		//muñeca
 		model = modelaux;
 		model = glm::translate(model, glm::vec3(0.5f, 0.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(-movPie* toRadians), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, -movPie* toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
 
 		//palma
 		modelaux = model = glm::translate(model, glm::vec3(0.15f, 0.0f, 0.0f));
@@ -854,7 +1059,7 @@ int main()
 		model = modelaux;
 		//articulación palma-falange dedo índice
 		model = glm::translate(model, glm::vec3(0.15f, 0.2f, 0.0f));
-		model = glm::rotate(model, glm::radians(-dedos * toRadians), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, -dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
 
 		//falange dedo índice
 		//model = glm::mat4(1.0);
@@ -868,7 +1073,7 @@ int main()
 		//articulacion falange-falangina
 		model = modeldedos;
 		model = glm::translate(model, glm::vec3(0.125f, 0.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(-dedos * toRadians), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, -dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
 
 		//falangina dedo índice
 		//model = glm::mat4(1.0);
@@ -880,7 +1085,7 @@ int main()
 		//articulacion falangina-falangeta
 		model = modeldedos;
 		model = glm::translate(model, glm::vec3(0.15f, 0.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(-dedos * toRadians), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, -dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
 		//falangeta dedo índice
 		//model = glm::mat4(1.0);
 		model = glm::translate(model, glm::vec3(0.1f, 0.0f, 0.0f));
@@ -895,7 +1100,7 @@ int main()
 		//medio
 		 //articulación palma-falange dedo medio
 		model = glm::translate(model, glm::vec3(0.15f, 0.07f, 0.0f));
-		model = glm::rotate(model, glm::radians(-dedos * toRadians), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, -dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
 		//falange dedo medio
 		modeldedos = model = glm::translate(model, glm::vec3(0.175f, 0.0f, 0.0f));
 		model = glm::scale(model, glm::vec3(0.35f, 0.1f, 0.2f));
@@ -905,7 +1110,7 @@ int main()
 		//articulacion falange-falangina
 		model = modeldedos;
 		model = glm::translate(model, glm::vec3(0.175f, 0.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(-dedos * toRadians), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, -dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
 
 		//falangina dedo medio
 		//model = glm::mat4(1.0);
@@ -917,7 +1122,7 @@ int main()
 		//articulacion falangina-falangeta
 		model = modeldedos;
 		model = glm::translate(model, glm::vec3(0.15f, 0.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(-dedos * toRadians), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, -dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
 
 		//falangeta dedo medio
 		//model = glm::mat4(1.0);
@@ -935,7 +1140,7 @@ int main()
 		//
 		//articulación palma-falange dedo anular
 		model = glm::translate(model, glm::vec3(0.15f, -0.07f, 0.0f));
-		model = glm::rotate(model, glm::radians(-dedos * toRadians), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, -dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
 
 		//falange dedo anular
 		//model = glm::mat4(1.0);
@@ -947,7 +1152,7 @@ int main()
 		//articulacion falange-falangina
 		model = modeldedos;
 		model = glm::translate(model, glm::vec3(0.15f, 0.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(-dedos * toRadians), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, -dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
 
 		//falangina dedo anular
 		//model = glm::mat4(1.0);
@@ -959,7 +1164,7 @@ int main()
 		//articulacion falangina-falangeta
 		model = modeldedos;
 		model = glm::translate(model, glm::vec3(0.15f, 0.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(-dedos * toRadians), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, -dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
 
 		//falangeta dedo anular
 		//model = glm::mat4(1.0);
@@ -989,7 +1194,7 @@ int main()
 		//articulacion falange-falangina
 		model = modeldedos;
 		model = glm::translate(model, glm::vec3(0.075f, 0.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(-dedos * toRadians), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model,-dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
 
 		//falangina dedo menique
 		//model = glm::mat4(1.0);
@@ -1001,7 +1206,7 @@ int main()
 		//articulacion falangina-falangeta
 		model = modeldedos;
 		model = glm::translate(model, glm::vec3(0.15f, 0.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(-dedos * toRadians), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, -dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
 
 		//falangeta dedo menique
 		//model = glm::mat4(1.0);
@@ -1024,7 +1229,7 @@ int main()
 		//silla
 		//respaldo
 		model = glm::mat4(1.0);
-		model = glm::translate(model, glm::vec3(-3.5f, -1.55f, -2.8f));
+		model = glm::translate(model, glm::vec3(-2.8f, -1.55f, -3.5f));
 		model = glm::scale(model, glm::vec3(0.4f, 0.8f, 0.1f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
@@ -1032,7 +1237,7 @@ int main()
 		meshList[1]->RenderMesh();
 		//asiento
 		model = glm::mat4(1.0);
-		model = glm::translate(model, glm::vec3(-3.5f, -1.9f, -2.65f));
+		model = glm::translate(model, glm::vec3(-2.8f, -1.9f, -3.35f));
 		model = glm::scale(model, glm::vec3(0.3f, 0.1f, 0.4f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
@@ -1040,7 +1245,7 @@ int main()
 		meshList[1]->RenderMesh();
 		//izquierdo
 		model = glm::mat4(1.0);
-		model = glm::translate(model, glm::vec3(-3.675f, -1.85f, -2.65f));
+		model = glm::translate(model, glm::vec3(-2.975f, -1.85f, -3.35f));
 		model = glm::scale(model, glm::vec3(0.05f, 0.2f, 0.4f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
@@ -1048,7 +1253,7 @@ int main()
 		meshList[1]->RenderMesh();
 		//derecho
 		model = glm::mat4(1.0);
-		model = glm::translate(model, glm::vec3(-3.325f, -1.85f, -2.65f));
+		model = glm::translate(model, glm::vec3(-2.625f, -1.85f, -3.35f));
 		model = glm::scale(model, glm::vec3(0.05f, 0.2f, 0.4f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
@@ -1124,7 +1329,7 @@ int main()
 		model = modelaux1;
 
 		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.2f));
-		model =modelaspas= glm::rotate(model, glm::radians(-movMuslo * toRadians), glm::vec3(0.0f, 0.0f, 1.0f));
+		model =modelaspas= glm::rotate(model, -mol * toRadians, glm::vec3(0.0f, 0.0f, 1.0f));
 
 		////aspa1
 		modelaspas = model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.2f));
@@ -1153,7 +1358,7 @@ int main()
 		////regresar las matrices a la posición del centro del tubo
 		model = modelaux1;
 		modelaspas = modelaux1;
-		model = modelaspas = glm::rotate(model, glm::radians(-movMuslo * toRadians), glm::vec3(0.0f, 0.0f, 1.0f));
+		model = modelaspas = glm::rotate(model, -mol * toRadians, glm::vec3(0.0f, 0.0f, 1.0f));
 
 		//aspas2
 		modelaspas = model = glm::translate(model, glm::vec3(0.0f, 0.94f, 0.4f));
@@ -1182,7 +1387,7 @@ int main()
 		////regresar las matrices a la posición del centro del tubo
 		model = modelaux1;
 		modelaspas = modelaux1;
-		model = modelaspas = glm::rotate(model, glm::radians(-movMuslo * toRadians), glm::vec3(0.0f, 0.0f, 1.0f));
+		model = modelaspas = glm::rotate(model, -mol * toRadians, glm::vec3(0.0f, 0.0f, 1.0f));
 
 		//aspas3
 		modelaspas = model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.4f));
@@ -1210,7 +1415,7 @@ int main()
 		////regresar las matrices a la posición del tubo
 		model = modelaux1;
 		modelaspas = modelaux1;
-		model = modelaspas = glm::rotate(model, glm::radians(-movMuslo * toRadians), glm::vec3(0.0f, 0.0f, 1.0f));
+		model = modelaspas = glm::rotate(model, -mol * toRadians, glm::vec3(0.0f, 0.0f, 1.0f));
 
 		//aspas4
 		modelaspas = model = glm::translate(model, glm::vec3(0.0f, -0.01f, 0.4f));
@@ -1391,7 +1596,7 @@ int main()
 
 		
 
-		//canica
+		//-------------------------------canica-----------------------------------------------------
 		model = glm::mat4(1.0);
 		model = glm::translate(model, glm::vec3(mainWindow.getd(), -1.9f, mainWindow.getw()));
 		model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
@@ -1407,15 +1612,16 @@ int main()
 		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
 		plata.UseTexture();
 		sp.render();
-
+		
+		//modelaux = glm::mat4(1.0);
 		model = glm::mat4(1.0);
-		model = glm::translate(model, glm::vec3(3.7f, -1.9f, 3.0f));
+		model = glm::translate(model, glm::vec3(cax, -1.9f, caz));
 		model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
 		metal.UseTexture();
 		sp.render();
-
+		//---------------------------------------------------------------------------------
 		//elementos visuales
 		model = glm::mat4(1.0);
 		model = glm::translate(model, glm::vec3(3.2f, -1.75f, 3.75f));
@@ -2104,4 +2310,33 @@ int main()
 	}
 
 	return 0;
+}
+void Window::mouse_button_callback(GLFWwindow* window, int button, int action, int mode)
+{
+	Window* theWindow = static_cast<Window*>(glfwGetWindowUserPointer(window));
+
+	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+	{
+
+
+		//Sleep(2000);
+		if (theWindow->resorte == 0.1f || theWindow->resorte == 0.05f)
+		{
+
+			theWindow->resorte -= 0.05f;
+		}
+		if (theWindow->resorte == 0.0f)
+		{
+
+			theWindow->resorte += 0.1f;
+			//aqui es donde se debe de empuja para iniciar animacion
+			/*if (theWindow->avCaz >= -3.5f)
+			{
+				theWindow->avCaz -= 6.5f;
+			}*/
+			theWindow->avCaz = -3.6f;
+			theWindow->avCax = -2.6f;
+		}
+
+	}
 }
