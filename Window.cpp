@@ -13,6 +13,9 @@ Window::Window()
 	flippersup = 0.0f;
 	w;
 	d;
+	luz;
+	luz1;
+	luz2;
 	resorte;
 	for (size_t i = 0; i < 1024; i++)
 	{
@@ -179,6 +182,33 @@ void Window::ManejaTeclado(GLFWwindow* window, int key, int code, int action, in
 		theWindow->d -= 0.2;
 	}
 
+	if (key == GLFW_KEY_1)
+	{
+		theWindow->luz = 1.0;
+	}
+	
+	if (key == GLFW_KEY_2)
+	{
+		
+		theWindow->luz = 0.0f;
+		
+	}
+	if (key == GLFW_KEY_3)
+	{
+		theWindow->luz1 = 1.0;
+	}
+	if (key == GLFW_KEY_4)
+	{
+		theWindow->luz1 = 0.0;
+	}
+	if (key == GLFW_KEY_5)
+	{
+		theWindow->luz2 = 0.0;
+	}
+	if (key == GLFW_KEY_6)
+	{
+		theWindow->luz2 = 1.0;
+	}
 	if (key >= 0 && key < 1024)
 	{
 		if (action == GLFW_PRESS)
@@ -212,28 +242,28 @@ void Window::ManejaMouse(GLFWwindow* window, double xPos, double yPos)
 	theWindow->lastY = yPos;
 }
 
-void Window::mouse_button_callback(GLFWwindow* window, int button, int action, int mode)
-{
-	Window* theWindow = static_cast<Window*>(glfwGetWindowUserPointer(window));
-	
-	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
-	{
-
-
-		//Sleep(2000);
-		if (theWindow->resorte == 0.1f || theWindow->resorte==0.05f)
-		{
-
-			theWindow->resorte -= 0.05f;
-		}
-		if (theWindow->resorte == 0.0f)
-		{
-		
-		theWindow->resorte += 0.1f;
-		}
-
-	}
-}
+//void Window::mouse_button_callback(GLFWwindow* window, int button, int action, int mode)
+//{
+//	Window* theWindow = static_cast<Window*>(glfwGetWindowUserPointer(window));
+//	
+//	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+//	{
+//
+//
+//		//Sleep(2000);
+//		if (theWindow->resorte == 0.1f || theWindow->resorte==0.05f)
+//		{
+//
+//			theWindow->resorte -= 0.05f;
+//		}
+//		if (theWindow->resorte == 0.0f)
+//		{
+//		
+//		theWindow->resorte += 0.1f;
+//		}
+//
+//	}
+//}
 
 Window::~Window()
 {

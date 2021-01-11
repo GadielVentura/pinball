@@ -104,7 +104,7 @@ SpotLight spotLights[MAX_SPOT_LIGHTS];
 //Model Kitt_M;
 //Model Llanta_M;
 //Model Camino_M;
-//Model Blackhawk_M;
+Model Blackhawk_M;
 Model spring;
 Model trunk;
 Model trampoline;
@@ -607,7 +607,7 @@ int main()
 	plata.LoadTextureA();
 	plano = Texture("Textures/plano.tga");
 	plano.LoadTextureA();
-	plano1 = Texture("Textures/plano1.tga");
+	plano1 = Texture("Textures/plano2.tga");
 	plano1.LoadTextureA();
 	pieljulien = Texture("Textures/pieljulien.tga");
 	pieljulien.LoadTextureA();
@@ -654,10 +654,10 @@ int main()
 	/*Kitt_M = Model();
 	Kitt_M.LoadModel("Models/kitt.3ds");
 	Llanta_M = Model();
-	Llanta_M.LoadModel("Models/k_rueda.3ds");
+	Llanta_M.LoadModel("Models/k_rueda.3ds");*/
 	Blackhawk_M = Model();
 	Blackhawk_M.LoadModel("Models/uh60.obj");
-	Camino_M = Model();
+	/*Camino_M = Model();
 	Camino_M.LoadModel("Models/railroad track.obj");*/
 	spring = Model();
 	spring.LoadModel("Models/spring1.obj");
@@ -750,6 +750,8 @@ int main()
 	float caz=3.6f;
 	float cax = 3.7f;
 	float cambiodir = 0.0, cambiodir1 = 0.0, cambiodir2 = 0.0, cambiodir3 = 0.0, cambiodir4=0.0;
+	float hx = -4.0, hy = 0.0, hz = -0.5;
+	float cambiohel=0.0, cambiohel1=0.0;
 	
 
 	sp.init(); //inicializar esfera
@@ -905,17 +907,6 @@ int main()
 							}
 						}
 					}
-				//else if (cambiodir == 1.0)
-				//{
-				//	if ((caz <= -2.8))//baja para chocar con la silla
-				//	{
-				//		caz += 0.1f;
-
-
-				//	}
-
-				//}
-			
 				
 			}
 			if ((mainWindow.getresorte()==0.05f))
@@ -929,7 +920,45 @@ int main()
 				cambiodir4 = 0.0;
 			}
 			
-			
+			//animacion helicoptero
+			if (hx <= 4.0)
+			{
+				hx += 0.01;
+				if (hx >= -2.0)
+				{
+					if (hy <= 1.0 && cambiohel == 0.0)
+					{
+						hy += 0.01;
+
+						if (hy >= 1.0)
+						{
+							cambiohel = 1.0;
+						}
+					}
+					else if (cambiohel=1.0)
+					{
+						if (hy >= -1.0 && cambiohel1==0.0)
+						{
+							hy -= 0.01;
+							if (hy <= -1.0)
+							{
+								cambiohel1 = 1.0;
+								//hy += 0.01;
+							}
+						}
+						else if (cambiohel1 = 1.0)
+						{
+							hy += 0.01;
+							if (hy >= 1.0)
+							{
+								cambiohel = 0.0;
+								cambiohel1 = 0.0;
+							}
+						}
+					}
+					
+				}
+			}
 			
 			
 
@@ -1216,6 +1245,417 @@ int main()
 		meshList[1]->RenderMesh();
 		//termina dedo menique
 
+
+		//--------------------MANO JERARQUICA 2----------------------
+		//muslo
+		model = glm::mat4(1.0);
+		modelaux = glm::mat4(1.0); 
+		modelaux = model = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
+		modelaux = model = glm::rotate(model, movCoche * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(0.5f, -1.75f, 1.0f));
+		model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));//FALSE ES PARA QUE NO SEA TRANSPUESTA
+		pieljulien.UseTexture();
+		//caja.UseTexture();
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		meshList[1]->RenderMesh();
+
+		model = modelaux;
+		//model = glm::translate(model, glm::vec3(0.5f, 0.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(0.5f, -1.75f, 1.0f));
+		model = glm::rotate(model, -movMuslo * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		//chamorro
+		modelaux = model = glm::translate(model, glm::vec3(-0.5f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		pieljulien.UseTexture();
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		meshList[1]->RenderMesh();
+		//muñeca
+		model = modelaux;
+		model = glm::translate(model, glm::vec3(-0.25f, 0.0f, 0.0f));
+		model = glm::rotate(model, -movPie * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//palma
+		modelaux = model = glm::translate(model, glm::vec3(-0.15f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.3f, 0.5f, 0.5f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		pie.UseTexture();
+		//caja.UseTexture();
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		meshList[1]->RenderMesh();
+
+		//Para dibujar los dedos debo de almacenar la posición del centro de la palma y utilizar una nueva matriz auxiliar
+		//glm::mat4 modeldedos(1.0);
+		modeldedos = glm::mat4(1.0);
+		//modelaux se quedara fija en la palma
+		modeldedos = modelaux;
+		model = modelaux;
+
+		//articulación palma-falange dedo índice
+		model = glm::translate(model, glm::vec3(-0.15f, 0.2f, 0.0f));
+		model = glm::rotate(model, -dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//falange dedo índice
+		//model = glm::mat4(1.0);
+		modeldedos = model = glm::translate(model, glm::vec3(-0.125f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.25f, 0.1f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		pie.UseTexture();
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		meshList[1]->RenderMesh();
+
+		//articulacion falange-falangina
+		model = modeldedos;
+		model = glm::translate(model, glm::vec3(-0.125f, 0.0f, 0.0f));
+		model = glm::rotate(model, -dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//falangina dedo índice
+		//model = glm::mat4(1.0);
+		modeldedos = model = glm::translate(model, glm::vec3(-0.15f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.3f, 0.09f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->RenderMesh();
+
+		//articulacion falangina-falangeta
+		model = modeldedos;
+		model = glm::translate(model, glm::vec3(-0.15f, 0.0f, 0.0f));
+		model = glm::rotate(model, -dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		//falangeta dedo índice
+		//model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-0.1f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.2f, 0.08f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->RenderMesh();
+		//termina dedo índice
+		//regresar las matrices a la posición del centro de la palma
+		model = modelaux;
+		modeldedos = modelaux;
+
+		//medio
+		 //articulación palma-falange dedo medio
+		model = glm::translate(model, glm::vec3(-0.15f, 0.07f, 0.0f));
+		model = glm::rotate(model, -dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		//falange dedo medio
+		modeldedos = model = glm::translate(model, glm::vec3(-0.175f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.35f, 0.1f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->RenderMesh();
+
+		//articulacion falange-falangina
+		model = modeldedos;
+		model = glm::translate(model, glm::vec3(-0.175f, 0.0f, 0.0f));
+		model = glm::rotate(model, -dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//falangina dedo medio
+		//model = glm::mat4(1.0);
+		modeldedos = model = glm::translate(model, glm::vec3(-0.15f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.3f, 0.09f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->RenderMesh();
+
+		//articulacion falangina-falangeta
+		model = modeldedos;
+		model = glm::translate(model, glm::vec3(-0.15f, 0.0f, 0.0f));
+		model = glm::rotate(model, -dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//falangeta dedo medio
+		//model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-0.1f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.2f, 0.08f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->RenderMesh();
+		//termina dedo medio
+		//regresar las matrices a la posición del centro de la palma
+		model = modelaux;
+		modeldedos = modelaux;
+
+		//
+		//anular
+		//
+		//articulación palma-falange dedo anular
+		model = glm::translate(model, glm::vec3(-0.15f, -0.07f, 0.0f));
+		model = glm::rotate(model, -dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//falange dedo anular
+		//model = glm::mat4(1.0);
+		modeldedos = model = glm::translate(model, glm::vec3(-0.15f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.3f, 0.1f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->RenderMesh();
+
+		//articulacion falange-falangina
+		model = modeldedos;
+		model = glm::translate(model, glm::vec3(-0.15f, 0.0f, 0.0f));
+		model = glm::rotate(model, -dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//falangina dedo anular
+		//model = glm::mat4(1.0);
+		modeldedos = model = glm::translate(model, glm::vec3(-0.15f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.3f, 0.09f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->RenderMesh();
+
+		//articulacion falangina-falangeta
+		model = modeldedos;
+		model = glm::translate(model, glm::vec3(-0.15f, 0.0f, 0.0f));
+		model = glm::rotate(model, -dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//falangeta dedo anular
+		//model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-0.1f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.2f, 0.08f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->RenderMesh();
+		//termina dedo anular
+		//regresar las matrices a la posición del centro de la palma
+		model = modelaux;
+		modeldedos = modelaux;
+
+		//
+		//menique
+		//
+		//articulación palma-falange dedo menique
+		model = glm::translate(model, glm::vec3(-0.15f, -0.2f, 0.0f));
+		//model = glm::rotate(model, glm::radians(mainWindow.getfalange_menique() * toRadians), glm::vec3(0.0f, 0.0f, 1.0f));
+
+		//falange dedo menique
+		//model = glm::mat4(1.0);
+		modeldedos = model = glm::translate(model, glm::vec3(-0.075f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.15f, 0.1f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->RenderMesh();
+
+		//articulacion falange-falangina
+		model = modeldedos;
+		model = glm::translate(model, glm::vec3(-0.075f, 0.0f, 0.0f));
+		model = glm::rotate(model, -dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//falangina dedo menique
+		//model = glm::mat4(1.0);
+		modeldedos = model = glm::translate(model, glm::vec3(-0.15f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.3f, 0.09f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->RenderMesh();
+
+		//articulacion falangina-falangeta
+		model = modeldedos;
+		model = glm::translate(model, glm::vec3(-0.15f, 0.0f, 0.0f));
+		model = glm::rotate(model, -dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//falangeta dedo menique
+		//model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-0.1f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.2f, 0.08f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->RenderMesh();
+		//termina dedo menique
+
+
+			//--------------------MANO JERARQUICA 3----------------------
+		//muslo
+			model = glm::mat4(1.0);
+		modelaux = glm::mat4(1.0);
+		modelaux = model = glm::translate(model, glm::vec3(2.0f, 0.0f, 0.0f));
+		modelaux = model = glm::rotate(model, movCoche * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(0.5f, -1.75f, -2.6f));
+		model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));//FALSE ES PARA QUE NO SEA TRANSPUESTA
+		pieljulien.UseTexture();
+		//caja.UseTexture();
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		meshList[1]->RenderMesh();
+
+		model = modelaux;
+		//model = glm::translate(model, glm::vec3(0.5f, 0.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(0.5f, -1.75f, -2.6f));
+		model = glm::rotate(model, movMuslo * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		//chamorro
+		modelaux = model = glm::translate(model, glm::vec3(-0.5f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		pieljulien.UseTexture();
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		meshList[1]->RenderMesh();
+		//muñeca
+		model = modelaux;
+		model = glm::translate(model, glm::vec3(-0.25f, 0.0f, 0.0f));
+		model = glm::rotate(model, movPie * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//palma
+		modelaux = model = glm::translate(model, glm::vec3(-0.15f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.3f, 0.5f, 0.5f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		pie.UseTexture();
+		//caja.UseTexture();
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		meshList[1]->RenderMesh();
+
+		//Para dibujar los dedos debo de almacenar la posición del centro de la palma y utilizar una nueva matriz auxiliar
+		//glm::mat4 modeldedos(1.0);
+		modeldedos = glm::mat4(1.0);
+		//modelaux se quedara fija en la palma
+		modeldedos = modelaux;
+		model = modelaux;
+
+		//articulación palma-falange dedo índice
+		model = glm::translate(model, glm::vec3(-0.15f, 0.2f, 0.0f));
+		model = glm::rotate(model, dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//falange dedo índice
+		//model = glm::mat4(1.0);
+		modeldedos = model = glm::translate(model, glm::vec3(-0.125f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.25f, 0.1f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		pie.UseTexture();
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		meshList[1]->RenderMesh();
+
+		//articulacion falange-falangina
+		model = modeldedos;
+		model = glm::translate(model, glm::vec3(-0.125f, 0.0f, 0.0f));
+		model = glm::rotate(model, dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//falangina dedo índice
+		//model = glm::mat4(1.0);
+		modeldedos = model = glm::translate(model, glm::vec3(-0.15f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.3f, 0.09f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->RenderMesh();
+
+		//articulacion falangina-falangeta
+		model = modeldedos;
+		model = glm::translate(model, glm::vec3(-0.15f, 0.0f, 0.0f));
+		model = glm::rotate(model, dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		//falangeta dedo índice
+		//model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-0.1f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.2f, 0.08f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->RenderMesh();
+		//termina dedo índice
+		//regresar las matrices a la posición del centro de la palma
+		model = modelaux;
+		modeldedos = modelaux;
+
+		//medio
+		 //articulación palma-falange dedo medio
+		model = glm::translate(model, glm::vec3(-0.15f, 0.07f, 0.0f));
+		model = glm::rotate(model, dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		//falange dedo medio
+		modeldedos = model = glm::translate(model, glm::vec3(-0.175f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.35f, 0.1f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->RenderMesh();
+
+		//articulacion falange-falangina
+		model = modeldedos;
+		model = glm::translate(model, glm::vec3(-0.175f, 0.0f, 0.0f));
+		model = glm::rotate(model, dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//falangina dedo medio
+		//model = glm::mat4(1.0);
+		modeldedos = model = glm::translate(model, glm::vec3(-0.15f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.3f, 0.09f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->RenderMesh();
+
+		//articulacion falangina-falangeta
+		model = modeldedos;
+		model = glm::translate(model, glm::vec3(-0.15f, 0.0f, 0.0f));
+		model = glm::rotate(model, dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//falangeta dedo medio
+		//model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-0.1f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.2f, 0.08f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->RenderMesh();
+		//termina dedo medio
+		//regresar las matrices a la posición del centro de la palma
+		model = modelaux;
+		modeldedos = modelaux;
+
+		//
+		//anular
+		//
+		//articulación palma-falange dedo anular
+		model = glm::translate(model, glm::vec3(-0.15f, -0.07f, 0.0f));
+		model = glm::rotate(model, dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//falange dedo anular
+		//model = glm::mat4(1.0);
+		modeldedos = model = glm::translate(model, glm::vec3(-0.15f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.3f, 0.1f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->RenderMesh();
+
+		//articulacion falange-falangina
+		model = modeldedos;
+		model = glm::translate(model, glm::vec3(-0.15f, 0.0f, 0.0f));
+		model = glm::rotate(model, dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//falangina dedo anular
+		//model = glm::mat4(1.0);
+		modeldedos = model = glm::translate(model, glm::vec3(-0.15f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.3f, 0.09f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->RenderMesh();
+
+		//articulacion falangina-falangeta
+		model = modeldedos;
+		model = glm::translate(model, glm::vec3(-0.15f, 0.0f, 0.0f));
+		model = glm::rotate(model, dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//falangeta dedo anular
+		//model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-0.1f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.2f, 0.08f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->RenderMesh();
+		//termina dedo anular
+		//regresar las matrices a la posición del centro de la palma
+		model = modelaux;
+		modeldedos = modelaux;
+
+		//
+		//menique
+		//
+		//articulación palma-falange dedo menique
+		model = glm::translate(model, glm::vec3(-0.15f, -0.2f, 0.0f));
+		//model = glm::rotate(model, glm::radians(mainWindow.getfalange_menique() * toRadians), glm::vec3(0.0f, 0.0f, 1.0f));
+
+		//falange dedo menique
+		//model = glm::mat4(1.0);
+		modeldedos = model = glm::translate(model, glm::vec3(-0.075f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.15f, 0.1f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->RenderMesh();
+
+		//articulacion falange-falangina
+		model = modeldedos;
+		model = glm::translate(model, glm::vec3(-0.075f, 0.0f, 0.0f));
+		model = glm::rotate(model, dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//falangina dedo menique
+		//model = glm::mat4(1.0);
+		modeldedos = model = glm::translate(model, glm::vec3(-0.15f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.3f, 0.09f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->RenderMesh();
+
+		//articulacion falangina-falangeta
+		model = modeldedos;
+		model = glm::translate(model, glm::vec3(-0.15f, 0.0f, 0.0f));
+		model = glm::rotate(model, dedos * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//falangeta dedo menique
+		//model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-0.1f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.2f, 0.08f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		meshList[1]->RenderMesh();
+		//termina dedo menique
 		//--------------------------------------objetos--------------------------------------------------------------
 
 		//caja animales
@@ -1557,12 +1997,11 @@ int main()
 		meshList[2]->RenderMesh();
 
 
-		//flipper
+		//--------------------------flipper------------------------------------------------------
 		model = glm::mat4(1.0);
 		modelaux = glm::mat4(1.0);
 		modelaux=model = glm::translate(model, glm::vec3(-1.15f, -1.945f, 3.6f));
 		modelaux = model = glm::rotate(model, glm::radians(mainWindow.getflipperiz() * toRadians), glm::vec3(0.0f, 1.0f, 0.0f));
-		//model = glm::translate(model, glm::vec3(-0.65f, -1.945f, 3.6f));
 		model = glm::translate(model, glm::vec3(0.5f, -00.0f, 0.0f));
 		model = glm::scale(model, glm::vec3(1.0f, 0.1f, 0.1f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
@@ -1601,7 +2040,7 @@ int main()
 		model = glm::translate(model, glm::vec3(mainWindow.getd(), -1.9f, mainWindow.getw()));
 		model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
 		metal.UseTexture();
 		sp.render();
 
@@ -1609,7 +2048,7 @@ int main()
 		model = glm::translate(model, glm::vec3(-1.0f, -1.9f, -1.0f));
 		model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
 		plata.UseTexture();
 		sp.render();
 		
@@ -1618,7 +2057,7 @@ int main()
 		model = glm::translate(model, glm::vec3(cax, -1.9f, caz));
 		model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
-		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
 		metal.UseTexture();
 		sp.render();
 		//---------------------------------------------------------------------------------
@@ -2247,9 +2686,6 @@ int main()
 		model = glm::mat4(1.0);
 		model = glm::translate(model, glm::vec3(3.7f, -1.9f, 3.5f));
 		model = glm::scale(model, glm::vec3(0.1f, 0.1f, mainWindow.getresorte()));
-		//model = glm::rotate(model, -90 * toRadians, glm::vec3(1.0f, 0.0f, 0.0f));
-		//model = glm::rotate(model, -90 * toRadians, glm::vec3(0.0f, 0.0f, 1.0f));
-		//model = glm::rotate(model, -90 * toRadians, glm::vec3(0.0f, 0.0f, 1.0f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
 		spring.RenderModel();
@@ -2259,7 +2695,7 @@ int main()
 
 		////trunk
 		model = glm::mat4(1.0);
-		model = glm::translate(model, glm::vec3(2.0f, -1.66f, 0.5f));
+		model = glm::translate(model, glm::vec3(2.0f, -1.66f, -0.4f));
 		model = glm::scale(model, glm::vec3(0.07f, 0.07f, 0.07f));
 		//model = glm::rotate(model, -90 * toRadians, glm::vec3(1.0f, 0.0f, 0.0f));
 		//model = glm::rotate(model, -90 * toRadians, glm::vec3(0.0f, 0.0f, 1.0f));
@@ -2304,6 +2740,17 @@ int main()
 		//meshList[3]->RenderMesh();
 		//glDisable(GL_BLEND);
 
+		model = glm::mat4(1.0);
+		//modelaux = glm::mat4(1.0);
+		//modelaux=model = glm::translate(model, glm::vec3(-2.0f, 2.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(hx, hy, hz));
+		model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
+		model = glm::rotate(model, -90 * toRadians, glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::rotate(model, -90 * toRadians, glm::vec3(0.0f, 0.0f, 1.0f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		Blackhawk_M.RenderModel();
+
 			glUseProgram(0);
 
 		mainWindow.swapBuffers();
@@ -2318,8 +2765,6 @@ void Window::mouse_button_callback(GLFWwindow* window, int button, int action, i
 	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
 	{
 
-
-		//Sleep(2000);
 		if (theWindow->resorte == 0.1f || theWindow->resorte == 0.05f)
 		{
 
@@ -2330,10 +2775,6 @@ void Window::mouse_button_callback(GLFWwindow* window, int button, int action, i
 
 			theWindow->resorte += 0.1f;
 			//aqui es donde se debe de empuja para iniciar animacion
-			/*if (theWindow->avCaz >= -3.5f)
-			{
-				theWindow->avCaz -= 6.5f;
-			}*/
 			theWindow->avCaz = -3.6f;
 			theWindow->avCax = -2.6f;
 		}

@@ -19,7 +19,12 @@ public:
 	GLfloat getflippersup() { return flippersup; }
 	GLfloat getw() { return w; }
 	GLfloat getd() { return d; }
+	GLfloat getluz() { return luz; }
+	GLfloat getluz1() { return luz1; }
+	GLfloat getluz2() { return luz2; }
 	GLfloat getresorte() { return resorte; }
+	GLfloat getavCaz() { return avCaz; }
+	GLfloat getavCax() { return avCax; }
 	bool getShouldClose() {
 		return  glfwWindowShouldClose(mainWindow);}
 	bool* getsKeys() { return keys; }
@@ -40,6 +45,9 @@ private:
 	GLfloat flipperiz=0.0f, flipperder=0.0f, flippersup=0.0f;
 	GLfloat w=-1.0f, d=1.0f;
 	GLfloat resorte=0.1f;
+	GLfloat luz = 0.0f, luz1 = 0.0f, luz2 = 1.0f;
+	GLfloat avCaz = 3.0f;
+	GLfloat avCax = 0.0f;
 	bool mouseFirstMoved;
 	static void ManejaTeclado(GLFWwindow* window, int key, int code, int action, int mode);
 	static void ManejaMouse(GLFWwindow* window, double xPos, double yPos);
