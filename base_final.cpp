@@ -48,6 +48,7 @@ float movOffset;
 float movMuslo;
 float movPie;
 float dedos;
+float reproduciranimacion, habilitaranimacion, guardoFrame, reinicioFrame, ciclo, ciclo2, contador = 0;
 bool avanza;
 Window mainWindow;
 std::vector<Mesh*> meshList;
@@ -91,6 +92,11 @@ Texture botiquin;
 Texture mascarilla;
 Texture telefono;
 Texture flecha;
+Texture coco;
+Texture mort_cuerpo;
+Texture mort_brazo;
+Texture oreja;
+
 
 //materiales
 Material Material_brillante;
@@ -109,6 +115,9 @@ Model spring;
 Model trunk;
 Model trampoline;
 Model tunel;
+Model banana;
+Model palanca;
+Model cabeza_mort;
 
 Skybox skybox;
 
@@ -119,6 +128,9 @@ GLfloat lastTime = 0.0f;
 Sphere sp = Sphere(1.0, 20, 20);
 Cilindro cilindro(1.0);
 Cono cono(1.0);
+
+//void my_input(GLFWwindow *window);
+void inputKeyframes(bool* keys);
 
 // Vertex Shader
 static const char* vShader = "shaders/shader_light.vert";
@@ -561,6 +573,113 @@ void CreateShaders()
 	shaderList.push_back(*shader1);
 }
 
+///////////////////////////////KEYFRAMES/////////////////////
+
+
+bool animacion = false;
+
+
+
+//NEW// Keyframes
+float posXavion = -1.0, posYavion = -1.9, posZavion = -1.0;
+float	movAvion_x = 0.0f, movAvion_y = 0.0f, movAvion_Z=0.0f;
+float giroAvion = 0;
+
+#define MAX_FRAMES 9
+int i_max_steps = 90;
+int i_curr_steps = 5;
+typedef struct _frame
+{
+	//Variables para GUARDAR Key Frames
+	float movAvion_x;		//Variable para PosicionX
+	float movAvion_y;		//Variable para PosicionY
+	float movAvion_Z;
+	float movAvion_xInc;		//Variable para IncrementoX
+	float movAvion_yInc;		//Variable para IncrementoY
+	float movAvion_ZInc;
+	float giroAvion;
+	float giroAvionInc;
+}FRAME;
+
+FRAME KeyFrame[MAX_FRAMES];
+int FrameIndex =5;			//introducir datos
+bool play = false;
+int playIndex = 0;
+
+void saveFrame(void)
+{
+
+	printf("frameindex %d\n", FrameIndex);
+
+
+	KeyFrame[FrameIndex].movAvion_x = movAvion_x;
+	KeyFrame[FrameIndex].movAvion_y = movAvion_y;
+	KeyFrame[FrameIndex].movAvion_Z = movAvion_Z;
+	KeyFrame[FrameIndex].giroAvion = giroAvion;
+
+	FrameIndex++;
+}
+
+void resetElements(void)
+{
+
+	movAvion_x = KeyFrame[0].movAvion_x;
+	movAvion_y = KeyFrame[0].movAvion_y;
+	movAvion_Z = KeyFrame[0].movAvion_Z;
+	giroAvion = KeyFrame[0].giroAvion;
+}
+
+void interpolation(void)
+{
+	KeyFrame[playIndex].movAvion_xInc = (KeyFrame[playIndex + 1].movAvion_x - KeyFrame[playIndex].movAvion_x) / i_max_steps;
+	KeyFrame[playIndex].movAvion_yInc = (KeyFrame[playIndex + 1].movAvion_y - KeyFrame[playIndex].movAvion_y) / i_max_steps;
+	KeyFrame[playIndex].movAvion_ZInc = (KeyFrame[playIndex + 1].movAvion_Z - KeyFrame[playIndex].movAvion_Z) / i_max_steps;
+	KeyFrame[playIndex].giroAvionInc = (KeyFrame[playIndex + 1].giroAvion - KeyFrame[playIndex].giroAvion) / i_max_steps;
+
+}
+
+
+void animate(void)
+{
+	//Movimiento del objeto
+	if (play)
+	{
+		if (i_curr_steps >= i_max_steps) //end of animation between frames?
+		{
+			playIndex++;
+			printf("playindex : %d\n", playIndex);
+			if (playIndex > FrameIndex - 2)	//end of total animation?
+			{
+				printf("Frame index= %d\n", FrameIndex);
+				printf("termina anim\n");
+				playIndex = 0;
+				play = false;
+			}
+			else //Next frame interpolations
+			{
+				//printf("entro aquí\n");
+				i_curr_steps = 0; //Reset counter
+				//Interpolation
+				interpolation();
+			}
+		}
+		else
+		{
+			//printf("se quedó aqui\n");
+			//printf("max steps: %f", i_max_steps);
+			//Draw animation
+			movAvion_x += KeyFrame[playIndex].movAvion_xInc;
+			movAvion_y += KeyFrame[playIndex].movAvion_yInc;
+			movAvion_Z += KeyFrame[playIndex].movAvion_ZInc;
+			giroAvion += KeyFrame[playIndex].giroAvionInc;
+			i_curr_steps++;
+		}
+
+	}
+}
+
+/* FIN KEYFRAMES*/
+
 int main() 
 {
 	mainWindow = Window(1366, 768); // 1280, 1024 or 1024, 768
@@ -647,6 +766,14 @@ int main()
 	telefono.LoadTextureA();
 	flecha = Texture("Textures/flecha.tga");
 	flecha.LoadTextureA();
+	coco = Texture("Textures/coco.tga");
+	coco.LoadTextureA();
+	mort_cuerpo= Texture("Textures/mort_cuerpo.tga");
+	mort_cuerpo.LoadTextureA();
+	mort_brazo = Texture("Textures/brazo_mort.tga");
+	mort_brazo.LoadTextureA();
+	oreja = Texture("Textures/oreja.tga");
+	oreja.LoadTextureA();
 	
 	Material_brillante = Material(4.0f, 256);
 	Material_opaco = Material(0.3f, 4);
@@ -667,6 +794,14 @@ int main()
 	trampoline.LoadModel("Models/trampoline.obj");
 	tunel = Model();
 	tunel.LoadModel("Models/tunel.obj");
+	banana = Model();
+	banana.LoadModel("Models/banana.obj");
+	palanca = Model();
+	palanca.LoadModel("Models/palanca.obj");
+	cabeza_mort = Model();
+	cabeza_mort.LoadModel("Models/cabeza_mort.obj");
+	
+
 	//luz direccional, sólo 1 y siempre debe de existir
 	mainLight = DirectionalLight(1.0f, 1.0f, 1.0f, 
 								0.3f, 0.3f,
@@ -703,8 +838,7 @@ int main()
 
 	//luz de faro
 	 //luz de helicóptero
-
-	/*glm::vec3 posblackhawk = glm::vec3(2.0f, 0.0f, 0.0f);*/
+	glm::vec3 posblackhawk = glm::vec3(1.0f, 0.0f, 0.3f);
 
 	std::vector<std::string> skyboxFaces;
 	/*skyboxFaces.push_back("Textures/Skybox/cupertin-lake_rt.tga");
@@ -752,12 +886,45 @@ int main()
 	float cambiodir = 0.0, cambiodir1 = 0.0, cambiodir2 = 0.0, cambiodir3 = 0.0, cambiodir4=0.0;
 	float hx = -4.0, hy = 0.0, hz = -0.5;
 	float cambiohel=0.0, cambiohel1=0.0;
+	float activa_resorte=0.0;
+	float mort = 0.0,cambiomort=0.0;
+
+	//KEYFRAMES DECLARADOS INICIALES
+
+	KeyFrame[0].movAvion_x = 0.0f;
+	KeyFrame[0].movAvion_y = 0.0f;
+	KeyFrame[0].movAvion_Z = 0.0f;
+	KeyFrame[0].giroAvion = 0;
+
+	KeyFrame[1].movAvion_x = 0.75f;
+	KeyFrame[1].movAvion_y = 0.0f;
+	KeyFrame[1].movAvion_Z = 0.8f;
+	KeyFrame[1].giroAvion = 0.0;
+
+	KeyFrame[2].movAvion_x = 0.01f;
+	KeyFrame[2].movAvion_y = 0.0f;
+	KeyFrame[2].movAvion_Z = 1.2f;
+	KeyFrame[2].giroAvion = 0;
+
+	KeyFrame[3].movAvion_x = 2.0f;
+	KeyFrame[3].movAvion_y = 0.0f;
+	KeyFrame[3].movAvion_Z = 2.6f;
+	KeyFrame[3].giroAvion = 0;
+
+	KeyFrame[4].movAvion_x = 1.0f;
+	KeyFrame[4].movAvion_Z = 0.0f;
+	KeyFrame[4].movAvion_Z = 1.3f;
+	KeyFrame[4].giroAvion = 0.0f;
+
 	
+
 
 	sp.init(); //inicializar esfera
 	sp.load();//enviar la esfera al shader
 	cono.init();
 	cilindro.init();
+
+	
 
 	//Loop mientras no se cierra la ventana
 	while (!mainWindow.getShouldClose())
@@ -850,7 +1017,7 @@ int main()
 				if (cax >= mainWindow.getavCax() && cambiodir1==0.0)//avanza horizontal hasta llegar a la silla
 				{
 					cax -= 0.1f;
-					if (cax < -2.6)
+					if (cax < -2.58)
 					{
 						cambiodir1 = 1.0;
 					}
@@ -960,7 +1127,34 @@ int main()
 				}
 			}
 			
-			
+			//palanca
+			if (mainWindow.getactivaRe() == 1440)
+			{
+				caz = 3.0;
+				cax = 3.7;
+				cambiodir = 0.0;
+				cambiodir1 = 0.0;
+				cambiodir2 = 0.0;
+				cambiodir3 = 0.0;
+				cambiodir4 = 0.0;
+			}
+			//mort
+			if (mort < 50  && cambiomort==0.0)
+			{
+				mort += 0.3;
+				if (mort >= 45)
+				{
+					cambiomort = 1.0;
+				}
+			}
+			else if (cambiomort == 1.0)
+			{
+				mort -= 0.3;
+				if (mort <= 0)
+				{
+					cambiomort = 0.0;
+				}
+			}
 
 		//Recibir eventos del usuario
 		glfwPollEvents();
@@ -969,6 +1163,10 @@ int main()
 		camera.mouseControl(mainWindow.getXChange(), mainWindow.getYChange());
 		/*camera2.keyControl(mainWindow.getsKeys(), deltaTime);
 		camera2.mouseControl(mainWindow.getXChange(), mainWindow.getYChange());*/
+		//para keyframes
+ 		inputKeyframes(mainWindow.getsKeys());
+		animate();
+
 		// Clear the window
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1725,6 +1923,15 @@ int main()
 		cruz.UseTexture();
 		meshList[1]->RenderMesh();
 
+		//coco
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-1.2f, -1.82f, 0.3f));
+		model = glm::scale(model, glm::vec3(0.2f, 0.2f, 0.2f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		coco.UseTexture();
+		sp.render();
+
 		//----------------------------------------molino--------------------------------------------
 		//cilindro
 		model = glm::mat4(1.0);
@@ -2044,8 +2251,11 @@ int main()
 		metal.UseTexture();
 		sp.render();
 
+		
 		model = glm::mat4(1.0);
-		model = glm::translate(model, glm::vec3(-1.0f, -1.9f, -1.0f));
+		posblackhawk = glm::vec3(posXavion + movAvion_x, posYavion + movAvion_y, posZavion+movAvion_Z);
+		model = glm::translate(model, posblackhawk);
+		//model = glm::translate(model, glm::vec3(posXavion + movAvion_x, posYavion + movAvion_y, posZavion+movAvion_Z));
 		model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
@@ -2650,6 +2860,172 @@ int main()
 		luz.UseTexture();
 		meshList[2]->RenderMesh();
 
+		//--------------------------------PERSONAJE---------------------------------------
+		//oreja
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(0.1f, -1.7f, -2.0f));
+		model = glm::scale(model, glm::vec3(0.06f, 0.02f, 0.02f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		oreja.UseTexture();
+		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		meshList[3]->RenderMesh();
+
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-0.1f, -1.7f, -2.0f));
+		model = glm::scale(model, glm::vec3(0.06f, 0.02f, 0.02f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		oreja.UseTexture();
+		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		meshList[4]->RenderMesh();
+
+		//cuerpo mort
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(0.0f, -1.9f, -2.0f));
+		model = glm::scale(model, glm::vec3(0.12f, 0.2f, 0.12f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		mort_cuerpo.UseTexture();
+		meshList[2]->RenderMesh();
+		
+		//brazo
+		model = glm::mat4(1.0);
+		modelaux = glm::mat4(1.0);
+		modelaux=model = glm::translate(model, glm::vec3(0.06f, -1.85f, -2.0f));
+		modelaux=model = glm::rotate(model, -mort * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(0.025f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.1f, 0.05f, 0.05f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		mort_brazo.UseTexture();
+		meshList[2]->RenderMesh();
+
+		//mano
+		model = glm::mat4(1.0);
+		modelaux = glm::mat4(1.0);
+		//modelaux=model = glm::translate(model, glm::vec3(0.215f, -1.75f, -2.0f));
+		modelaux = model = glm::translate(model, glm::vec3(0.06f, -1.85f, -2.0f));
+		modelaux=model = glm::rotate(model, -mort * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(0.1f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		oreja.UseTexture();
+		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		meshList[4]->RenderMesh();
+
+		//dedos
+		model = glm::mat4(1.0);
+		modelaux = glm::mat4(1.0);
+		modelaux = model = glm::translate(model, glm::vec3(0.06f, -1.85f, -2.0f));
+		modelaux = model = glm::rotate(model, -mort * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(0.15f, 0.022f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.05f, 0.01f, 0.01f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		oreja.UseTexture();
+		meshList[2]->RenderMesh();
+
+		model = glm::mat4(1.0);
+		modelaux = glm::mat4(1.0);
+		modelaux = model = glm::translate(model, glm::vec3(0.06f, -1.85f, -2.0f));
+		modelaux = model = glm::rotate(model, -mort * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(0.15f, 0.008f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.05f, 0.01f, 0.01f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		oreja.UseTexture();
+		meshList[2]->RenderMesh();
+
+		model = glm::mat4(1.0);
+		modelaux = glm::mat4(1.0);
+		modelaux = model = glm::translate(model, glm::vec3(0.06f, -1.85f, -2.0f));
+		modelaux = model = glm::rotate(model, -mort * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(0.15f, -0.008f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.05f, 0.01f, 0.01f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		oreja.UseTexture();
+		meshList[2]->RenderMesh();
+
+		model = glm::mat4(1.0);
+		modelaux = glm::mat4(1.0);
+		modelaux = model = glm::translate(model, glm::vec3(0.06f, -1.85f, -2.0f));
+		modelaux = model = glm::rotate(model, -mort * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(0.15f, -0.022f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.05f, 0.01f, 0.01f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		oreja.UseTexture();
+		meshList[2]->RenderMesh();
+
+		//brazo izq
+		model = glm::mat4(1.0);
+		modelaux = glm::mat4(1.0);
+		modelaux = model = glm::translate(model, glm::vec3(-0.06f, -1.85f, -2.0f));
+		modelaux = model = glm::rotate(model, mort * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(-0.025f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.1f, 0.05f, 0.05f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		mort_brazo.UseTexture();
+		meshList[2]->RenderMesh();
+
+		model = glm::mat4(1.0);
+		modelaux = glm::mat4(1.0);
+		//modelaux = model = glm::translate(model, glm::vec3(-0.215f, -1.75f, -2.0f));
+		modelaux = model = glm::translate(model, glm::vec3(-0.06f, -1.85f, -2.0f));
+		modelaux = model = glm::rotate(model, mort * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(-0.1f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.05f, 0.05f, 0.05f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		oreja.UseTexture();
+		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		meshList[3]->RenderMesh();
+
+		//dedos
+		model = glm::mat4(1.0);
+		modelaux = glm::mat4(1.0);
+		modelaux = model = glm::translate(model, glm::vec3(-0.06f, -1.85f, -2.0f));
+		modelaux = model = glm::rotate(model, mort * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(-0.15f, 0.022f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.05f, 0.01f, 0.01f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		oreja.UseTexture();
+		meshList[2]->RenderMesh();
+
+		model = glm::mat4(1.0);
+		modelaux = glm::mat4(1.0);
+		modelaux = model = glm::translate(model, glm::vec3(-0.06f, -1.85f, -2.0f));
+		modelaux = model = glm::rotate(model, mort * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(-0.15f, 0.008f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.05f, 0.01f, 0.01f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		oreja.UseTexture();
+		meshList[2]->RenderMesh();
+
+		model = glm::mat4(1.0);
+		modelaux = glm::mat4(1.0);
+		modelaux = model = glm::translate(model, glm::vec3(-0.06f, -1.85f, -2.0f));
+		modelaux = model = glm::rotate(model, mort * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(-0.15f, -0.008f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.05f, 0.01f, 0.01f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		oreja.UseTexture();
+		meshList[2]->RenderMesh();
+
+		model = glm::mat4(1.0);
+		modelaux = glm::mat4(1.0);
+		modelaux = model = glm::translate(model, glm::vec3(-0.06f, -1.85f, -2.0f));
+		modelaux = model = glm::rotate(model, mort * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::translate(model, glm::vec3(-0.15f, -0.022f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.05f, 0.01f, 0.01f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		oreja.UseTexture();
+		meshList[2]->RenderMesh();
+
 		//carga de modelos
 		//model = glm::mat4(1.0);
 		//model = glm::translate(model, glm::vec3(movCoche, -1.4f, 0.0f));
@@ -2727,6 +3103,34 @@ int main()
 		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
 		tunel.RenderModel();
 
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(-0.85f, -1.9f, -2.0f));
+		model = glm::rotate(model, -90 * toRadians, glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(0.005f, 0.005f, 0.005f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		banana.RenderModel();
+
+		//palanca
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(3.8f, -1.9f, 3.7f));
+		model = glm::scale(model, glm::vec3(0.05f, 0.03f, 0.04));
+		model = glm::rotate(model, -180 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		//model = glm::rotate(model, activa_resorte , glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::rotate(model, glm::radians(mainWindow.getactivaRe() * toRadians), glm::vec3(1.0f, 0.0f, 0.0f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		palanca.RenderModel();
+
+		//cabeza mort
+		model = glm::mat4(1.0);
+		model = glm::translate(model, glm::vec3(0.0f, -1.72f, -2.0f));
+		model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
+		//model = glm::rotate(model, -180 * toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Material_opaco.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		cabeza_mort.RenderModel();
+
 		////Agave ¿qué sucede si lo renderizan antes del coche y de la pista?
 		//model = glm::mat4(1.0);
 		//model = glm::translate(model, glm::vec3(0.0f, -1.7f, -2.0f));
@@ -2750,6 +3154,17 @@ int main()
 		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
 		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
 		Blackhawk_M.RenderModel();
+
+		/*model = glm::mat4(1.0);
+		posblackhawk = glm::vec3(posXavion + movAvion_x, posYavion + movAvion_y, posZavion);
+		model = glm::translate(model, posblackhawk);
+		model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
+		model = glm::rotate(model, giroAvion* toRadians, glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::rotate(model, -90 * toRadians, glm::vec3(1.0f, 0.0f, 0.0f));
+		model = glm::rotate(model, -90 * toRadians, glm::vec3(0.0f, 0.0f, 1.0f));
+		glUniformMatrix4fv(uniformModel, 1, GL_FALSE, glm::value_ptr(model));
+		Material_brillante.UseMaterial(uniformSpecularIntensity, uniformShininess);
+		Blackhawk_M.RenderModel();*/
 
 			glUseProgram(0);
 
@@ -2780,4 +3195,111 @@ void Window::mouse_button_callback(GLFWwindow* window, int button, int action, i
 		}
 
 	}
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+	{
+		
+		if (theWindow->activaRe == 0.0f || theWindow->activaRe == 720.0f)
+		{
+			theWindow->activaRe += 720.0f;
+			if (theWindow->resorte == 0.1f || theWindow->resorte == 0.05f)
+			{
+
+				theWindow->resorte -= 0.05f;
+			}
+			if (theWindow->resorte == 0.0f)
+			{
+
+				theWindow->resorte += 0.1f;
+				//aqui es donde se debe de empuja para iniciar animacion
+				theWindow->avCaz = -3.6f;
+				theWindow->avCax = -2.6f;
+			}
+		}
+		if (theWindow->activaRe == 1440.0f)
+		{
+			theWindow->activaRe -= 1440.0f;
+			
+
+		}
+
+		
+		
+	}
+}
+
+void inputKeyframes(bool* keys)
+{
+	if (keys[GLFW_KEY_SPACE])
+	{
+		if (reproduciranimacion < 1)
+		{
+			if (play == false && (FrameIndex > 1))
+			{
+				resetElements();
+				//First Interpolation				
+				interpolation();
+				play = true;
+				playIndex = 0;
+				i_curr_steps = 0;
+				reproduciranimacion++;
+				printf("presiona 0 para habilitar reproducir de nuevo la animación'\n");
+				habilitaranimacion = 0;
+
+			}
+			else
+			{
+				play = false;
+			}
+		}
+	}
+	if (keys[GLFW_KEY_0])
+	{
+		if (habilitaranimacion < 1)
+		{
+			reproduciranimacion = 0;
+		}
+	}
+
+	if (keys[GLFW_KEY_T])
+	{
+		if (guardoFrame < 1)
+		{
+			saveFrame();
+			printf("movAvion_x es: %f\n", movAvion_x);
+			//printf("movAvion_y es: %f\n", movAvion_y);
+			printf("presiona P para habilitar guardar otro frame'\n");
+			guardoFrame++;
+			reinicioFrame = 0;
+		}
+	}
+	if (keys[GLFW_KEY_G])
+	{
+		if (reinicioFrame < 1)
+		{
+			guardoFrame = 0;
+		}
+	}
+
+
+	if (keys[GLFW_KEY_7])
+	{
+		if (ciclo < 1)
+		{
+			//printf("movAvion_x es: %f\n", movAvion_x);
+			movAvion_x += 1.0f;
+			printf("movAvion_x es: %f\n", movAvion_x);
+			ciclo++;
+			ciclo2 = 0;
+			printf("reinicia con 2\n");
+		}
+
+	}
+	if (keys[GLFW_KEY_8])
+	{
+		if (ciclo2 < 1)
+		{
+			ciclo = 0;
+		}
+	}
+
 }
